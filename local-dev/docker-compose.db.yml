@@ -1,0 +1,26 @@
+# Docker Compose — SAPCyTI Development Database
+# Usage: docker compose -f docker-compose.yml up -d
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sapcyti-dev-db
+    restart: unless-stopped
+    ports:
+      # Host 5433 avoids clash with a local PostgreSQL often bound to 5432
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: sapcyti_dev
+      POSTGRES_USER: sapcyti
+      POSTGRES_PASSWORD: sapcyti_dev_pass
+    volumes:
+      - sapcyti-dev-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sapcyti -d sapcyti_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sapcyti-dev-db-data:
+    name: sapcyti-dev-db-data

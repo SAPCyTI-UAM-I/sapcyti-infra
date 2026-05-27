@@ -1,0 +1,20 @@
+name: Deploy Stack
+
+on:
+  workflow_call:
+
+jobs:
+  deploy:
+    name: Execute Remote Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /opt/sapcyti/sapcyti-infra/production
+            docker compose pull
+            docker compose up -d

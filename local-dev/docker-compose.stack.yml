@@ -29,11 +29,11 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "8081:8080"
     depends_on:
       db:
         condition: service_healthy
-
+ 
   edge:
     build:
       context: ../../sapcyti-spa
@@ -43,7 +43,7 @@ services:
     ports:
       - "${EDGE_HTTP_PORT:-80}:80"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro,Z
     depends_on:
       api:
         condition: service_started

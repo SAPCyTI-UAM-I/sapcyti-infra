@@ -1,8 +1,8 @@
 # SPEC-010 — full-stack smoke (Windows PowerShell)
 param(
     [string]$BaseUrl = $(if ($env:SMOKE_BASE_URL) { $env:SMOKE_BASE_URL } else { "http://localhost" }),
-    [string]$AuthUser = $(if ($env:SMOKE_AUTH_USER) { $env:SMOKE_AUTH_USER } else { "coordinator" }),
-    [string]$AuthPass = $(if ($env:SMOKE_COORDINATOR_PASSWORD) { $env:SMOKE_COORDINATOR_PASSWORD } else { "changeme" })
+    [string]$AuthEmail = $(if ($env:SMOKE_AUTH_EMAIL) { $env:SMOKE_AUTH_EMAIL } else { "coordinator@uam.mx" }),
+    [string]$AuthPass = $(if ($env:SMOKE_AUTH_PASSWORD) { $env:SMOKE_AUTH_PASSWORD } else { "password" })
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,8 +23,21 @@ function Fail([string]$Message) {
     exit 1
 }
 
-$cred = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${AuthUser}:${AuthPass}"))
-$authHeader = @{ Authorization = "Basic $cred" }
+Write-Host "==> POST /api/auth/login"
+$loginBody = @{ email = $AuthEmail; password = $AuthPass; rememberMe = $false } | ConvertTo-Json
+try {
+    $login = Invoke-WebRequest -Uri "$ApiUrl/auth/login" -Method Post -ContentType "application/json" `
+        -Body $loginBody -UseBasicParsing
+} catch {
+    $status = $_.Exception.Response.StatusCode.value__
+    Fail "POST /api/auth/login returned $status"
+}
+$loginJson = Get-ResponseText $login.Content | ConvertFrom-Json
+$accessToken = $loginJson.accessToken
+if (-not $accessToken) {
+    Fail "login response missing accessToken"
+}
+$authHeader = @{ Authorization = "Bearer $accessToken" }
 
 Write-Host "==> Health (proxied actuator)"
 try {

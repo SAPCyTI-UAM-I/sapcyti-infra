@@ -22,12 +22,13 @@ Servicios recomendados en Railway:
 | `api` | Docker Hub: `sapcyti-api` | Privado |
 | `spa` | Docker Hub: `sapcyti-spa` | Publico |
 
-Archivos de ejemplo incluidos en esta carpeta:
+Archivos de ejemplo incluidos:
 
 | Archivo | Uso |
 | --- | --- |
-| [`api.env.example`](api.env.example) | Variables para el servicio Railway `api` |
+| [`api.env.example`](api.env.example) | Variables para el servicio Railway `api`, copia local en infra |
 | [`spa.env.example`](spa.env.example) | Variables para el servicio Railway `spa` |
+| [`../../sapcyti-api/.env.railway.example`](../../sapcyti-api/.env.railway.example) | Variables Railway documentadas junto al backend |
 
 Los archivos son plantillas. No guardes llaves JWT reales ni secretos reales en el repositorio.
 
@@ -161,6 +162,8 @@ API_UPSTREAM="http://api.railway.internal:8080"
 
 `API_UPSTREAM` sale del nombre del servicio Railway de la API. Si el servicio se llama `api`, Railway expone la red privada como `api.railway.internal`; por eso el valor queda `http://api.railway.internal:8080`.
 
+La imagen `sapcyti-spa` resuelve este host en runtime desde nginx usando el DNS del contenedor (`NGINX_RESOLVER`, auto-detectado desde `/etc/resolv.conf`). Esto evita que nginx falle al arrancar si Railway tarda unos segundos en publicar `api.railway.internal`.
+
 No agregues slash final. Correcto:
 
 ```env
@@ -278,6 +281,8 @@ Confirma que el servicio se llama exactamente `api`. Si se llama distinto, actua
 ```env
 API_UPSTREAM=http://NOMBRE_REAL.railway.internal:8080
 ```
+
+La config nginx de la SPA ya usa resolucion DNS dinamica. Si aun ves errores de resolucion, confirma que el servicio `api` esta en el mismo proyecto/environment de Railway y que ya termino de iniciar.
 
 ### La API no conecta a PostgreSQL
 

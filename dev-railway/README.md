@@ -22,6 +22,12 @@ Servicios recomendados en Railway:
 | `api` | Docker Hub: `sapcyti-api` | Privado |
 | `spa` | Docker Hub: `sapcyti-spa` | Publico |
 
+Servicio opcional para pruebas de HU-02 (sin SMTP real):
+
+| Servicio | Fuente | Exposicion |
+| --- | --- | --- |
+| `mailhog` | Docker Hub oficial: `mailhog/mailhog:latest` | Publico (UI) + Privado (SMTP) |
+
 Archivos de ejemplo incluidos:
 
 | Archivo | Uso |
@@ -110,6 +116,14 @@ DB_URL="jdbc:postgresql://${{postgres.PGHOST}}:${{postgres.PGPORT}}/${{postgres.
 DB_USER="${{postgres.PGUSER}}"
 DB_PASS="${{postgres.PGPASSWORD}}"
 CORS_ALLOWED_ORIGINS="https://spa-production-7348.up.railway.app"
+PASSWORD_RESET_BASE_URL="https://spa-production-7348.up.railway.app"
+PASSWORD_RESET_TTL_MINUTES="30"
+SMTP_HOST="smtp.tu-proveedor.com"
+SMTP_PORT="587"
+SMTP_USER="noreply@tu-dominio.com"
+SMTP_PASS="REEMPLAZAR_SECRETO"
+SMTP_AUTH="true"
+SMTP_STARTTLS="true"
 JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----"
 JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----"
 ```
@@ -124,6 +138,9 @@ Valores pendientes y de donde salen:
 | `DB_USER` | Referencia a `${{postgres.PGUSER}}` del servicio PostgreSQL de Railway. |
 | `DB_PASS` | Referencia a `${{postgres.PGPASSWORD}}` del servicio PostgreSQL de Railway. |
 | `CORS_ALLOWED_ORIGINS` | Dominio publico generado para el servicio `spa`, por ejemplo `https://spa-production-7348.up.railway.app`. |
+| `PASSWORD_RESET_BASE_URL` | Dominio publico del `spa` sin ruta. Si tu URL visible es `https://spa-production-7348.up.railway.app/dashboard`, aqui debe ir `https://spa-production-7348.up.railway.app`. |
+| `PASSWORD_RESET_TTL_MINUTES` | TTL del token de recuperación (por defecto 30). |
+| `SMTP_*` | Credenciales SMTP reales del proveedor de correo transaccional en Railway. |
 | `JWT_PRIVATE_KEY` | Llave privada generada por ti con `openssl`; pegar PEM completo. |
 | `JWT_PUBLIC_KEY` | Llave publica generada desde la llave privada; pegar PEM completo. |
 
@@ -202,6 +219,33 @@ El contenedor SPA usa la variable `PORT` si Railway la inyecta. Si Railway no de
 PORT=8080
 ```
 
+## 4.1 MailHog en Railway (sin docker compose)
+
+Si en Railway no usaras SMTP real todavia, puedes levantar MailHog como servicio aparte:
+
+1. Crea un servicio nuevo en Railway desde Docker Image:
+
+```text
+mailhog/mailhog:latest
+```
+
+2. Nombra el servicio como `mailhog` (recomendado para DNS interno estable).
+3. En el servicio `api`, configura:
+
+```env
+SMTP_HOST=mailhog.railway.internal
+SMTP_PORT=1025
+SMTP_USER=noreply@tu-dominio.com
+SMTP_AUTH=false
+SMTP_STARTTLS=false
+```
+
+4. Genera dominio publico para el servicio `mailhog` si quieres abrir la bandeja web.
+   - La UI de MailHog corre en el puerto `8025`.
+   - SMTP interno sigue en `1025`.
+
+Cuando migres a proveedor real (Resend/SendGrid/Mailgun), reemplaza `SMTP_*` y elimina MailHog.
+
 ## 5. Dominio Publico
 
 Genera dominio publico solo para `spa`.
@@ -216,7 +260,10 @@ Cuando tengas el dominio publico de `spa`, vuelve al servicio `api` y actualiza:
 
 ```env
 CORS_ALLOWED_ORIGINS=https://spa-production-7348.up.railway.app
+PASSWORD_RESET_BASE_URL=https://spa-production-7348.up.railway.app
 ```
+
+> Importante: `PASSWORD_RESET_BASE_URL` debe ser solo el origen (esquema + host), sin `/dashboard` ni slash final.
 
 ## 6. Orden De Despliegue
 

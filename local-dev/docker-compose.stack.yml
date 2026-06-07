@@ -33,6 +33,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: sapcyti-stack-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
  
   edge:
     build:
@@ -46,6 +54,8 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro,Z
     depends_on:
       api:
+        condition: service_started
+      mailhog:
         condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]

@@ -31,8 +31,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout infra repository
         uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository_owner }}/sapcyti-infra
 
       - name: Set Environment-Specific Routing Variables
         id: env_vars

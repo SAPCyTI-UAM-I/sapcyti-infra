@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-sapcyti}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - sapcyti-${ENV_NAME}-db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
     networks:
       - internal-net
     healthcheck:
@@ -57,7 +57,7 @@ services:
       start_period: 15s
 
 volumes:
-  sapcyti-${ENV_NAME}-db-data:
+  db-data:
     name: sapcyti-${ENV_NAME}-db-data
 
 networks:

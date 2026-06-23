@@ -10,8 +10,9 @@ EDGE_HTTP_PORT=$4
 POSTGRES_PASSWORD=$5
 SPRING_PROFILE=$6
 ALLOWED_ORIGIN=$7
-SMTP_HOST=${8:-localhost}
-SMTP_PORT=${9:-1025}
+GHCR_TOKEN=${8:-}
+SMTP_HOST=${9:-localhost}
+SMTP_PORT=${10:-1025}
 
 # 2. Define the absolute base workspace directory
 BASE_DIR="$HOME/sapcyti"
@@ -51,8 +52,17 @@ EOF
 
 echo "✅ Successfully generated .env inside $BASE_DIR/$ENV_NAME"
 
-# 5. Run the actual Docker Lifecycle commands natively inside the script!
+# 5. Authenticate to GHCR so the server can pull private images
+if [ -n "$GHCR_TOKEN" ]; then
+  GHCR_USER=$(echo "$API_IMAGE" | cut -d'/' -f2)
+  echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+fi
+
+# 6. Run the actual Docker Lifecycle commands natively inside the script!
 docker compose pull
 docker compose up -d --remove-orphans
+
+# Clean up credentials from the daemon after pull
+docker logout ghcr.io
 
 echo "🚀 Stack sapcyti-$ENV_NAME is up and running!"

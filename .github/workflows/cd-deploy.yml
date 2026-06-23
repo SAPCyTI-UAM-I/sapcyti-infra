@@ -24,6 +24,8 @@ on:
         required: true
       POSTGRES_PASSWORD:
         required: true
+      GHCR_TOKEN:
+        required: true
 
 jobs:
   deploy:
@@ -77,5 +79,6 @@ jobs:
               "${{ inputs.spa_image }}" \
               "${{ steps.env_vars.outputs.edge_port }}" \
               "${{ secrets.POSTGRES_PASSWORD }}" \
+              "${{ secrets.GHCR_TOKEN }}" \
               "${{ steps.env_vars.outputs.spring_profile }}" \
               "${{ steps.env_vars.outputs.allowed_origin }}"

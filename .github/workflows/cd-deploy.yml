@@ -1,0 +1,79 @@
+name: CD Engine
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Target hosting environment (dev, qa, prod)'
+        required: true
+        type: string
+      api_image:
+        description: 'Full GHCR container tag for the API'
+        required: true
+        type: string
+      spa_image:
+        description: 'Full GHCR container tag for the SPA'
+        required: true
+        type: string
+    secrets:
+      SSH_HOST:
+        required: true
+      SSH_USER:
+        required: true
+      SSH_KEY:
+        required: true
+      POSTGRES_PASSWORD:
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy to server on env ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set Environment-Specific Routing Variables
+        id: env_vars
+        run: |
+          if [ "${{ inputs.environment }}" = "dev" ]; then
+            echo "spring_profile=docker" >> $GITHUB_OUTPUT
+            echo "allowed_origin=http://dev.sapcyti.uam.mx" >> $GITHUB_OUTPUT
+            echo "edge_port=8081" >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.environment }}" = "qa" ]; then
+            echo "spring_profile=qa" >> $GITHUB_OUTPUT
+            echo "allowed_origin=http://qa.sapcyti.uam.mx" >> $GITHUB_OUTPUT
+            echo "edge_port=8082" >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.environment }}" = "prod" ]; then
+            echo "spring_profile=prod" >> $GITHUB_OUTPUT
+            echo "allowed_origin=http://sapcyti.uam.mx" >> $GITHUB_OUTPUT
+            echo "edge_port=8080" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Copy Config Blueprints and Scripts via SCP
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "production/docker-compose.yml,production/env_build.sh"
+          target: "~/sapcyti/${{ inputs.environment }}"
+          strip_components: 1
+      
+      - name: Execute Remote Deployment via SSH Script
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            chmod +x ~/sapcyti/${{ inputs.environment }}/env_build.sh
+            ~/sapcyti/${{ inputs.environment }}/env_build.sh \
+              "${{ inputs.environment }}" \
+              "${{ inputs.api_image }}" \
+              "${{ inputs.spa_image }}" \
+              "${{ steps.env_vars.outputs.edge_port }}" \
+              "${{ secrets.POSTGRES_PASSWORD }}" \
+              "${{ steps.env_vars.outputs.spring_profile }}" \
+              "${{ steps.env_vars.outputs.allowed_origin }}"

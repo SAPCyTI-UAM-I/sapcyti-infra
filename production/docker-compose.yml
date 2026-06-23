@@ -12,6 +12,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - sapcyti-${ENV_NAME}-db-data:/var/lib/postgresql/data
+    networks:
+      - internal-net
     healthcheck:
       test:
         [
@@ -26,7 +28,7 @@ services:
     image: ${API_IMAGE}
     container_name: sapcyti-${ENV_NAME}-api
     restart: unless-stopped
-    env_file: .env.${ENV_NAME}
+    env_file: .env
     networks:
       - internal-net
     depends_on:

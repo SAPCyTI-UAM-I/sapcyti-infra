@@ -57,8 +57,7 @@ Typical flow:
 
 - PostgreSQL with persistent data
 - API image pulled from GHCR by default
-- SPA edge image pulled from GHCR by default
-- Nginx config in `production/default.conf`
+- SPA edge image pulled from GHCR by default (pre-packaged Nginx template configured via `API_URL` environment variable)
 
 The deployment workflow in `.github/workflows/deploy.yml` uses SSH to connect to the target host, change into `/opt/sapcyti/sapcyti-infra/production`, pull images, and restart the stack.
 

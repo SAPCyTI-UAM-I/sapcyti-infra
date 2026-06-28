@@ -174,23 +174,23 @@ El backend soporta estas variables porque `JwtService` lee `jwt.private-key` y `
 Configura estas variables en el servicio `spa`. Puedes copiar la plantilla [`spa.env.example`](spa.env.example):
 
 ```env
-API_UPSTREAM="http://api.railway.internal:8080"
+API_URL="http://api.railway.internal:8080"
 ```
 
-`API_UPSTREAM` sale del nombre del servicio Railway de la API. Si el servicio se llama `api`, Railway expone la red privada como `api.railway.internal`; por eso el valor queda `http://api.railway.internal:8080`.
+`API_URL` sale del nombre del servicio Railway de la API. Si el servicio se llama `api`, Railway expone la red privada como `api.railway.internal`; por eso el valor queda `http://api.railway.internal:8080`.
 
-La imagen `sapcyti-spa` resuelve este host en runtime desde nginx usando el DNS del contenedor (`NGINX_RESOLVER`, auto-detectado desde `/etc/resolv.conf`). Esto evita que nginx falle al arrancar si Railway tarda unos segundos en publicar `api.railway.internal`.
+La imagen oficial de Nginx sustituye `${API_URL}` en [`docker/nginx/default.conf.template`](../../sapcyti-spa/docker/nginx/default.conf.template) al arrancar el contenedor.
 
 No agregues slash final. Correcto:
 
 ```env
-API_UPSTREAM=http://api.railway.internal:8080
+API_URL=http://api.railway.internal:8080
 ```
 
 Incorrecto:
 
 ```env
-API_UPSTREAM=http://api.railway.internal:8080/
+API_URL=http://api.railway.internal:8080/
 ```
 
 La SPA ya esta compilada con:
@@ -313,10 +313,10 @@ SERVER_ADDRESS="::"
 
 `SERVER_ADDRESS="::"` permite que Spring Boot escuche en IPv6/IPv4. Railway recomienda escuchar en `::` para que la red privada funcione correctamente en todos los entornos.
 
-Tambien confirma que `API_UPSTREAM` en `spa` apunte al servicio correcto:
+Tambien confirma que `API_URL` en `spa` apunte al servicio correcto:
 
 ```env
-API_UPSTREAM="http://api.railway.internal:8080"
+API_URL="http://api.railway.internal:8080"
 ```
 
 Despues de cambiar variables, redeploy de `api` y luego de `spa`.
@@ -326,10 +326,10 @@ Despues de cambiar variables, redeploy de `api` y luego de `spa`.
 Confirma que el servicio se llama exactamente `api`. Si se llama distinto, actualiza:
 
 ```env
-API_UPSTREAM=http://NOMBRE_REAL.railway.internal:8080
+API_URL=http://NOMBRE_REAL.railway.internal:8080
 ```
 
-La config nginx de la SPA ya usa resolucion DNS dinamica. Si aun ves errores de resolucion, confirma que el servicio `api` esta en el mismo proyecto/environment de Railway y que ya termino de iniciar.
+Confirma que el servicio `api` esta en el mismo proyecto/environment de Railway y que ya termino de iniciar antes de probar la SPA.
 
 ### La API no conecta a PostgreSQL
 
@@ -396,7 +396,7 @@ Luego cambia el tag de imagen en Railway o usa redeploy si estas siguiendo `late
 - [ ] Servicio `postgres` creado en Railway.
 - [ ] Servicio `api` creado desde Docker image.
 - [ ] Servicio `spa` creado desde Docker image.
-- [ ] `API_UPSTREAM` apunta a `api.railway.internal:8080`.
+- [ ] `API_URL` apunta a `api.railway.internal:8080`.
 - [ ] `DB_URL`, `DB_USER`, `DB_PASS` usan variables del servicio PostgreSQL.
 - [ ] `JWT_PRIVATE_KEY` y `JWT_PUBLIC_KEY` configuradas.
 - [ ] Dominio publico generado solo para `spa`.

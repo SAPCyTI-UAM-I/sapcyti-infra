@@ -44,15 +44,15 @@ jobs:
         run: |
           if [ "${{ inputs.environment }}" = "dev" ]; then
             echo "spring_profile=docker" >> $GITHUB_OUTPUT
-            echo "allowed_origin=http://dev.sapcyti.uam.mx" >> $GITHUB_OUTPUT
-            echo "edge_port=8081" >> $GITHUB_OUTPUT
+            echo "allowed_origin=http://dev-sapcyti.duckdns.org" >> $GITHUB_OUTPUT
+            echo "edge_port=8090" >> $GITHUB_OUTPUT
           elif [ "${{ inputs.environment }}" = "qa" ]; then
             echo "spring_profile=qa" >> $GITHUB_OUTPUT
-            echo "allowed_origin=http://qa.sapcyti.uam.mx" >> $GITHUB_OUTPUT
-            echo "edge_port=8082" >> $GITHUB_OUTPUT
+            echo "allowed_origin=http://qa-sapcyti.duckdns.org" >> $GITHUB_OUTPUT
+            echo "edge_port=9090" >> $GITHUB_OUTPUT
           elif [ "${{ inputs.environment }}" = "prod" ]; then
             echo "spring_profile=prod" >> $GITHUB_OUTPUT
-            echo "allowed_origin=http://sapcyti.uam.mx" >> $GITHUB_OUTPUT
+            echo "allowed_origin=http://prod-sapcyti.duckdns.org" >> $GITHUB_OUTPUT
             echo "edge_port=8080" >> $GITHUB_OUTPUT
           fi
       

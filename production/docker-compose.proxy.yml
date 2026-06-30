@@ -1,0 +1,20 @@
+# SAPCyTI global edge router — the ONLY publicly exposed container (:80).
+# Routes by hostname (duckdns) to each environment's edge over proxy-net.
+# Deploy once on the host:  docker compose -f docker-compose.proxy.yml up -d
+# The per-env stacks join the same external proxy-net.
+
+services:
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: sapcyti-nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.global.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - proxy-net
+
+networks:
+  proxy-net:
+    external: true

@@ -24,7 +24,7 @@ on:
         required: true
       POSTGRES_PASSWORD:
         required: true
-      GHCR_TOKEN:
+      GHCR_PAT:
         required: true
 
 jobs:
@@ -70,7 +70,7 @@ jobs:
         uses: appleboy/ssh-action@v1.2.5
         env:
           DB_PASS: ${{ secrets.POSTGRES_PASSWORD }}
-          GHCR_PAT: ${{ secrets.GHCR_TOKEN }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}

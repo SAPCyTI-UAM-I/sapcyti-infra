@@ -31,6 +31,7 @@ jobs:
   deploy:
     name: Deploy to server on env ${{ inputs.environment }}
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Checkout infra repository
@@ -67,10 +68,14 @@ jobs:
       
       - name: Execute Remote Deployment via SSH Script
         uses: appleboy/ssh-action@v1.2.5
+        env:
+          DB_PASS: ${{ secrets.POSTGRES_PASSWORD }}
+          GHCR_PAT: ${{ secrets.GHCR_TOKEN }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          envs: DB_PASS,GHCR_PAT
           script: |
             chmod +x ~/sapcyti/${{ inputs.environment }}/env_build.sh
             ~/sapcyti/${{ inputs.environment }}/env_build.sh \
@@ -78,7 +83,7 @@ jobs:
               "${{ inputs.api_image }}" \
               "${{ inputs.spa_image }}" \
               "${{ steps.env_vars.outputs.edge_port }}" \
-              "${{ secrets.POSTGRES_PASSWORD }}" \
-              "${{ secrets.GHCR_TOKEN }}" \
+              "$DB_PASS" \
+              "$GHCR_PAT" \
               "${{ steps.env_vars.outputs.spring_profile }}" \
               "${{ steps.env_vars.outputs.allowed_origin }}"

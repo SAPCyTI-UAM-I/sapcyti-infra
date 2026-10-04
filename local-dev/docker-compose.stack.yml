@@ -1,6 +1,6 @@
-# SPEC-010 — full local stack: PostgreSQL + API + Nginx (SPA)
+# SPEC-010 - full local stack: PostgreSQL + API + Nginx (SPA)
 # Prerequisites: sapcyti-api and sapcyti-spa cloned as sibling directories (../../)
-# Setup: copy ../../sapcyti-api/.env.docker.example to .env here
+# Setup: copy local-dev/.env.example to local-dev/.env
 
 services:
   db:
@@ -34,14 +34,6 @@ services:
       db:
         condition: service_healthy
 
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: sapcyti-stack-mailhog
-    restart: unless-stopped
-    ports:
-      - "1025:1025"
-      - "8025:8025"
- 
   edge:
     build:
       context: ../../sapcyti-spa
@@ -54,8 +46,6 @@ services:
       - API_URL=${API_URL:-api:8080}
     depends_on:
       api:
-        condition: service_started
-      mailhog:
         condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]

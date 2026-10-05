@@ -19,6 +19,21 @@ RESEND_FROM=${RESEND_FROM:-"SAPCyTI <soporte@sapcyti.site>"}
 JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:-}
 JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY:-}
 
+# Compose .env is one assignment per line. A PEM with real newlines is read as a
+# new variable (base64 lines start with / or +). Quote and fold newlines to \n.
+quote_dotenv() {
+  local v="$1"
+  local nl=$'\n' escaped_nl='\n'
+  v=${v//$'\r'/}
+  v=${v//\\/\\\\}
+  v=${v//\"/\\\"}
+  # escaped_nl es la variable: en el reemplazo, \\n se convierte en salto real.
+  v=${v//$nl/$escaped_nl}
+  printf '"%s"' "$v"
+}
+JWT_PRIVATE_KEY=$(quote_dotenv "$JWT_PRIVATE_KEY")
+JWT_PUBLIC_KEY=$(quote_dotenv "$JWT_PUBLIC_KEY")
+
 # 2. Define the absolute base workspace directory
 BASE_DIR="$HOME/sapcyti"
 

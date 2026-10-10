@@ -23,6 +23,40 @@ services:
       timeout: 5s
       retries: 5
 
+  storage:
+    image: ${STORAGE_IMAGE:-rustfs/rustfs:latest}
+    container_name: sapcyti-stack-storage
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      RUSTFS_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-sapcyti_dev_access}
+      RUSTFS_SECRET_KEY: ${STORAGE_SECRET_KEY:-sapcyti_dev_secret_key}
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-sapcyti_dev_access}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-sapcyti_dev_secret_key}
+    volumes:
+      - sapcyti-storage-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/health || curl -sf http://localhost:9000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  storage-init:
+    image: minio/mc:latest
+    container_name: sapcyti-stack-storage-init
+    restart: "no"
+    depends_on:
+      storage:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set rustfs http://storage:9000 $${STORAGE_ACCESS_KEY:-sapcyti_dev_access} $${STORAGE_SECRET_KEY:-sapcyti_dev_secret_key} --api s3v4;
+      /usr/bin/mc mb --ignore-existing rustfs/sapcyti-documents;
+      exit 0;
+      "
+
   api:
     build: ../../sapcyti-api
     container_name: sapcyti-stack-api
@@ -32,6 +66,8 @@ services:
       - "8081:8080"
     depends_on:
       db:
+        condition: service_healthy
+      storage:
         condition: service_healthy
 
   edge:
@@ -57,3 +93,5 @@ services:
 volumes:
   sapcyti-db-data:
     name: sapcyti-db-data
+  sapcyti-storage-data:
+    name: sapcyti-storage-data

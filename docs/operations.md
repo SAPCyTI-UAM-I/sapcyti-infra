@@ -37,6 +37,9 @@ docker logs -f sapcyti-dev-edge
 
 # Base de datos
 docker logs -f sapcyti-dev-db
+
+# Almacenamiento de objetos (RustFS / S3)
+docker logs -f sapcyti-dev-storage
 ```
 
 ## 4. Reinicio manual de stacks

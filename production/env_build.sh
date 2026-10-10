@@ -18,6 +18,9 @@ RESEND_API_KEY=${RESEND_API_KEY:-${9:-}}
 RESEND_FROM=${RESEND_FROM:-"SAPCyTI <soporte@sapcyti.site>"}
 JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:-}
 JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY:-}
+STORAGE_IMAGE=${STORAGE_IMAGE:-rustfs/rustfs:latest}
+STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-sapcyti_${ENV_NAME}_storage_user}
+STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-}
 
 # Compose .env is one assignment per line. A PEM with real newlines is read as a
 # new variable (base64 lines start with / or +). Quote and fold newlines to \n.
@@ -39,6 +42,15 @@ BASE_DIR="$HOME/sapcyti"
 
 # 3. Move into the environment subdirectory
 cd "$BASE_DIR/$ENV_NAME"
+
+# Preservar o generar clave secreta de almacenamiento
+if [ -z "$STORAGE_SECRET_KEY" ]; then
+  if [ -f .env ] && grep -q '^STORAGE_SECRET_KEY=' .env; then
+    STORAGE_SECRET_KEY=$(grep '^STORAGE_SECRET_KEY=' .env | cut -d'=' -f2- | tr -d '"')
+  else
+    STORAGE_SECRET_KEY=$(openssl rand -hex 24)
+  fi
+fi
 
 # Ensure proxy-net network exists
 if ! docker network inspect proxy-net >/dev/null 2>&1; then
@@ -72,6 +84,14 @@ RESEND_FROM=$RESEND_FROM
 
 JWT_PRIVATE_KEY=$JWT_PRIVATE_KEY
 JWT_PUBLIC_KEY=$JWT_PUBLIC_KEY
+
+STORAGE_IMAGE=$STORAGE_IMAGE
+STORAGE_ACCESS_KEY=$STORAGE_ACCESS_KEY
+STORAGE_SECRET_KEY=$STORAGE_SECRET_KEY
+STORAGE_S3_ENDPOINT=http://storage:9000
+STORAGE_S3_REGION=us-east-1
+STORAGE_S3_BUCKET=sapcyti-documents
+STORAGE_S3_PATH_STYLE_ACCESS=true
 EOF
 
 echo "Successfully generated .env inside $BASE_DIR/$ENV_NAME"

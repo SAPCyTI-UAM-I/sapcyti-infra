@@ -24,6 +24,7 @@ Arrancar o cambiar infraestructura (local o produccion) sin editar Java ni Angul
 - Proxy global y SSL: `docs/reverse-proxy.md`
 - Correo transaccional (Resend): `docs/email-resend.md`
 - Operaciones y diagnostico: `docs/operations.md`
+- Almacenamiento de documentos (RustFS/S3): `docs/document-storage.md`
 
 ## Limites
 

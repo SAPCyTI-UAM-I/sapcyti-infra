@@ -19,23 +19,26 @@ flowchart TD
     subgraph NetDev ["Entorno dev"]
         DevEdge --> DevAPI["sapcyti-dev-api"]
         DevAPI --> DevDB[("sapcyti-dev-db")]
+        DevAPI --> DevStorage[("sapcyti-dev-storage (RustFS)")]
     end
 
     subgraph NetQA ["Entorno qa"]
         QAEdge --> QAAPI["sapcyti-qa-api"]
         QAAPI --> QADB[("sapcyti-qa-db")]
+        QAAPI --> QAStorage[("sapcyti-qa-storage (RustFS)")]
     end
 
     subgraph NetProd ["Entorno prod"]
         ProdEdge --> ProdAPI["sapcyti-prod-api"]
         ProdAPI --> ProdDB[("sapcyti-prod-db")]
+        ProdAPI --> ProdStorage[("sapcyti-prod-storage (RustFS)")]
     end
 ```
 
 ## 2. Redes Docker
 
 - `proxy-net`: Red externa compartida. Conecta `global-reverse-proxy` con el contenedor `edge` de cada entorno.
-- `internal-net`: Red privada dentro de cada Compose. Comunica `db`, `api` y `edge`. La base de datos nunca se expone fuera de esta red.
+- `internal-net`: Red privada dentro de cada Compose. Comunica `db`, `api`, `storage` (RustFS S3) y `edge`. La base de datos y el almacenamiento de objetos nunca se exponen fuera de esta red (ver [document-storage.md](document-storage.md)).
 
 ## 3. Matriz de entornos
 

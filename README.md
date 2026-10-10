@@ -18,6 +18,7 @@ Infraestructura, Nginx y flujos de CI/CD para SAPCyTI.
 - [Reverse Proxy y Cloudflare](docs/reverse-proxy.md): Nginx global, certificados Origin, modo Full Strict y dominios.
 - [Correo Transaccional (Resend)](docs/email-resend.md): Registros DNS en Cloudflare (SPF, DKIM) y variables de entorno.
 - [Operaciones](docs/operations.md): Comandos cotidianos, logs y resolucion de problemas.
+- [Almacenamiento de Documentos (RustFS/S3)](docs/document-storage.md): Bucket privado, aislamiento y respaldos pareados.
 
 ## Desarrollo local
 

@@ -32,6 +32,8 @@ on:
         required: false
       JWT_PUBLIC_KEY:
         required: false
+      TAILSCALE_AUTHKEY:
+        required: true
 
 jobs:
   deploy:
@@ -61,6 +63,12 @@ jobs:
             echo "allowed_origin=https://sapcyti.site" >> $GITHUB_OUTPUT
             echo "edge_port=8080" >> $GITHUB_OUTPUT
           fi
+
+      - name: Conectar runner a Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          tags: tag:ci
 
       - name: Copy Config Blueprints and Scripts via SCP
         uses: appleboy/scp-action@v1.0.0

@@ -70,38 +70,67 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           tags: tag:ci
 
+      # appleboy/*-action corre en un contenedor y no ve tailscale0 del runner.
+      # scp/ssh nativos salen por la Tailnet. Los secretos van por stdin, no por argv.
       - name: Copy Config Blueprints and Scripts via SCP
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          source: 'production/docker-compose.yml,production/env_build.sh'
-          target: '~/sapcyti/${{ inputs.environment }}'
-          strip_components: 1
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          umask 077
+          key_file="$RUNNER_TEMP/deploy_key"
+          trap 'rm -f "$key_file"' EXIT
+          if [[ "$SSH_KEY" == *$'\n'* ]]; then
+            printf '%s\n' "$SSH_KEY" > "$key_file"
+          else
+            printf '%b\n' "$SSH_KEY" > "$key_file"
+          fi
+          ssh_opts=(-i "$key_file" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new)
+          ssh "${ssh_opts[@]}" "$SSH_USER@$SSH_HOST" "mkdir -p ~/sapcyti/${{ inputs.environment }}"
+          scp "${ssh_opts[@]}" \
+            production/docker-compose.yml \
+            production/env_build.sh \
+            "$SSH_USER@$SSH_HOST:~/sapcyti/${{ inputs.environment }}/"
 
       - name: Execute Remote Deployment via SSH Script
-        uses: appleboy/ssh-action@v1.2.5
         env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
           DB_PASS: ${{ secrets.POSTGRES_PASSWORD }}
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
           JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          envs: DB_PASS,GHCR_PAT,RESEND_API_KEY,JWT_PRIVATE_KEY,JWT_PUBLIC_KEY
-          script: |
-            chmod +x ~/sapcyti/${{ inputs.environment }}/env_build.sh
-            ~/sapcyti/${{ inputs.environment }}/env_build.sh \
-              "${{ inputs.environment }}" \
-              "${{ inputs.api_image }}" \
-              "${{ inputs.spa_image }}" \
-              "${{ steps.env_vars.outputs.edge_port }}" \
-              "$DB_PASS" \
-              "$GHCR_PAT" \
-              "${{ steps.env_vars.outputs.spring_profile }}" \
-              "${{ steps.env_vars.outputs.allowed_origin }}" \
-              "$RESEND_API_KEY"
+        run: |
+          umask 077
+          key_file="$RUNNER_TEMP/deploy_key"
+          trap 'rm -f "$key_file"' EXIT
+          if [[ "$SSH_KEY" == *$'\n'* ]]; then
+            printf '%s\n' "$SSH_KEY" > "$key_file"
+          else
+            printf '%b\n' "$SSH_KEY" > "$key_file"
+          fi
+          {
+            printf 'export DB_PASS=%q\n' "$DB_PASS"
+            printf 'export GHCR_PAT=%q\n' "$GHCR_PAT"
+            printf 'export RESEND_API_KEY=%q\n' "$RESEND_API_KEY"
+            printf 'export JWT_PRIVATE_KEY=%q\n' "$JWT_PRIVATE_KEY"
+            printf 'export JWT_PUBLIC_KEY=%q\n' "$JWT_PUBLIC_KEY"
+            cat <<'REMOTE'
+          set -euo pipefail
+          chmod +x ~/sapcyti/${{ inputs.environment }}/env_build.sh
+          ~/sapcyti/${{ inputs.environment }}/env_build.sh \
+            "${{ inputs.environment }}" \
+            "${{ inputs.api_image }}" \
+            "${{ inputs.spa_image }}" \
+            "${{ steps.env_vars.outputs.edge_port }}" \
+            "$DB_PASS" \
+            "$GHCR_PAT" \
+            "${{ steps.env_vars.outputs.spring_profile }}" \
+            "${{ steps.env_vars.outputs.allowed_origin }}" \
+            "$RESEND_API_KEY"
+          REMOTE
+          } | ssh -i "$key_file" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \
+            "$SSH_USER@$SSH_HOST" bash -s

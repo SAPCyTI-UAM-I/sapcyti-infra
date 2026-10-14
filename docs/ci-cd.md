@@ -30,8 +30,8 @@ sequenceDiagram
 
     activate CD
     Note over CD: Determina perfil Spring, CORS y puerto loopback
-    CD->>Host: SCP: Copia docker-compose.yml y env_build.sh a ~/sapcyti/<env>/
-    CD->>Host: SSH: Ejecuta env_build.sh con parametros y secrets
+    Note over CD: Une el runner a Tailscale
+    CD->>Host: SCP y SSH por la IP Tailscale hacia ~/sapcyti/<env>/
     deactivate CD
 
     activate Host
@@ -74,10 +74,10 @@ secrets: inherit
    - `dev`: perfil `docker`, CORS `https://dev.sapcyti.site`, puerto loopback `8090`.
    - `qa`: perfil `qa`, CORS `https://qa.sapcyti.site`, puerto loopback `9090`.
    - `prod`: perfil `prod`, CORS `https://prod.sapcyti.site`, puerto loopback `8080`.
-2. **Transferencia SCP (`appleboy/scp-action`)**:
-   - Copia `production/docker-compose.yml` y `production/env_build.sh` hacia `~/sapcyti/<env>/`.
-3. **Ejecucion SSH (`appleboy/ssh-action`)**:
-   - Ejecuta `~/sapcyti/<env>/env_build.sh` pasando variables de base de datos, token GHCR y configuraciones de red.
+2. **Tailscale** (`tailscale/github-action`): el runner entra a la Tailnet con el tag `tag:ci`.
+3. **SCP y SSH nativos** del runner, no acciones Docker. Esas acciones no ven la interfaz Tailscale.
+   - Copian `production/docker-compose.yml` y `production/env_build.sh` hacia `~/sapcyti/<env>/`.
+   - Ejecutan `env_build.sh` con la contraseña de Postgres, el token GHCR y la configuración de red. `SSH_HOST` es la IP Tailscale del servidor.
 
 ## 4. Acciones de `env_build.sh` en el servidor
 
@@ -92,7 +92,8 @@ El script ejecuta en el servidor:
 
 | Secreto | Uso |
 |---|---|
-| `SSH_HOST` | Host o IP del servidor. |
+| `SSH_HOST` | IP Tailscale del servidor (`100.x`). La guardan `sapcyti-api` y `sapcyti-spa`, que heredan secretos al llamar este workflow. |
+| `TAILSCALE_AUTHKEY` | Auth key reusable, ephemeral y con tag `tag:ci`. Mismos repositorios que `SSH_HOST`. |
 | `SSH_USER` | Usuario de despliegue (`deployment`). |
 | `SSH_KEY` | Clave privada SSH. |
 | `POSTGRES_PASSWORD` | Password de la base de datos del entorno. |

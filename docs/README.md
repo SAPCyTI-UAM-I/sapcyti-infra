@@ -11,6 +11,7 @@ Indice de documentos tecnicos de despliegue y operacion en el servidor `servidop
 | [Reverse Proxy y Cloudflare](reverse-proxy.md) | Nginx global, certificados Origin de Cloudflare, modo Full Strict y enrutamiento por host. |
 | [Correo Transaccional](email-resend.md) | Integracion con Resend, registros DNS en Cloudflare (SPF, DKIM) y variables de entorno. |
 | [Operaciones](operations.md) | Comandos cotidianos, administracion de logs y resolucion de fallas. |
+| [Acceso y firewall, 2026-10-14](2026-10-14-acceso-y-firewall.md) | Tailscale para operadores y CI, UFW, SSH y verificacion del Tema 1. |
 
 ## Mapa de rutas
 
